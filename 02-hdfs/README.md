@@ -19,16 +19,22 @@ There various ways for accessing HDFS. In this workshop we will use the followin
 The [Hadoop Command](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/CommandsManual.html) allows us to work with Hadoop and HDFS through the command line. 
 In this workshop we are going to use the [File System Shell](https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html).  We can use it to create a directory, upload files, move files, delete files or folder and many more. You can access it using the `hadoop fs` command. 
 
-In our environment, the Hadoop command is accessible inside the `namenode` container. To access the help for the `fs` command, enter
+In our environment, the Hadoop command is accessible inside the `namenode` container. Go to container's Bash shell, enter
 
 ```
-docker exec -ti namenode hadoop fs
+docker exec -it namenode bash
+```
+
+To access the help for the `fs` command, enter
+
+```
+root@namenode:/# hadoop fs
 ```
 
 and you should get the help page in return
 
 ```
-bigdata@bigdata:~$ docker exec -ti namenode hadoop fs
+root@namenode:/# hadoop fs
 Usage: hadoop fs [generic options]
 	[-appendToFile <localsrc> ... <dst>]
 	[-cat [-ignoreCrc] <src> ...]
@@ -84,22 +90,6 @@ The general command line syntax is
 bin/hadoop command [genericOptions] [commandOptions]
 ```
 
-So to get a directory listing of the folder `user` in HDFS, you would use
-
-```
-docker exec -ti namenode hadoop fs -ls /user
-```
-
-to get back a result similar to this
-
-```
-bigdata@bigdata:~$ docker exec -ti namenode hadoop fs -ls /user
-Found 3 items
-drwxr-xr-x   - gus  gus                 0 2019-05-13 17:54 /user/gus
-drwxr-xr-x   - root supergroup          0 2019-05-13 15:59 /user/hive
-drwxr-xr-x   - hue  hue                 0 2019-05-13 18:19 /user/hue
-```
-
 ### Using Hue
 
 [Hue](http://gethue.com/) is a web-based interactive query editor in the Hadoop stack that lets you visualise and share data.
@@ -137,7 +127,7 @@ Enter `flightdata` into the **Directory Name** and click **Create**. We will use
 To create the folder with the **Hadoop File Command** use the `mkdir` command instead
 
 ```
-docker exec -ti namenode hadoop fs -mkdir /user/hue/flightdata
+hadoop fs -mkdir /user/hue/flightdata
 ```
 
 ### Uploading flightdata files
@@ -157,7 +147,7 @@ the file should now show up in the `flightdata` folder
 Now let's use the **Hadoop File Command** to upload the `carriers.csv` file as well.. 
 
 ```
-docker exec -ti namenode hadoop fs -copyFromLocal /data-transfer/flightdata/carriers.csv /user/hue/flightdata/
+hadoop fs -copyFromLocal /data-transfer/flightdata/carriers.csv /user/hue/flightdata/
 ```
 
 ### Viewing directory content
@@ -165,13 +155,13 @@ docker exec -ti namenode hadoop fs -copyFromLocal /data-transfer/flightdata/carr
 To see a listing of files we have uploaded from the command line, just perform 
 
 ```
-docker exec -ti namenode hadoop fs -ls /user/hue/flightdata/
+hadoop fs -ls /user/hue/flightdata/
 ```
 
 and you should see an output similar to the one below.
 
 ```
-bigdata@bigdata:~$ docker exec -ti namenode hadoop fs -ls /user/hue/flightdata/
+root@namenode:/# hadoop fs -ls /user/hue/flightdata/
 Found 2 items
 -rw-r--r--   3 hue  hue     244438 2019-05-13 19:41 /user/hue/flightdata/airports.csv
 -rw-r--r--   3 root hue      43758 2019-05-13 19:55 /user/hue/flightdata/carriers.csv
@@ -194,13 +184,13 @@ You can use the controls at the top to page through the content of the file.
 To show the content of the file from the **Hadoop File Command` you use the `cat` command. 
 
 ```
-docker exec -ti namenode hadoop fs -cat /user/hue/flightdata/carriers.csv | head
+hadoop fs -cat /user/hue/flightdata/carriers.csv | head
 ```
 
 because we pipe the result of the `cat` command into head, we only see the first 10 rows
 
 ```
-bigdata@bigdata:~$ docker exec -ti namenode hadoop fs -cat /user/hue/flightdata/carriers.csv | head
+root@namenode:/# hadoop fs -cat /user/hue/flightdata/carriers.csv | head
 Code,Description
 "02Q","Titan Airways"
 "04Q","Tradewind Aviation"
@@ -228,7 +218,7 @@ A copy of the file is made and put into the same folder.
 To copy the `carriers.csv` file using the **Hadoop File Command**, perform the following command
 
 ```
-docker exec -ti namenode hadoop fs -cp /user/hue/flightdata/carriers.csv /user/hue/flightdata/carriers.csv.save
+hadoop fs -cp /user/hue/flightdata/carriers.csv /user/hue/flightdata/carriers.csv.save
 ```
 
 ### Download a file from HDFS to the local filesystem
@@ -243,7 +233,7 @@ The file will end up in the downloads folder of your browser.
 To download the `carriers.csv.save` file using the **Hadoop File Command**, perform the following command
 
 ```
-docker exec -ti namenode hadoop fs -copyToLocal /user/hue/flightdata/carriers.save.csv /data-transfer
+hadoop fs -copyToLocal /user/hue/flightdata/carriers.save.csv /data-transfer
 ```
 
 the file should end up in the `data-transfer' folder on the docker machine. 
@@ -264,34 +254,5 @@ Confirm the delete by clicking on **Yes** and the file will be removed immediate
 To delete the `carriers.csv.save` file using the **Hadoop File Command**, perform the following command
 
 ```
-docker exec -ti namenode hadoop fs -rm /user/hue/flightdata/carriers.csv.save
+hadoop fs -rm /user/hue/flightdata/carriers.csv.save
 ```
-
-## Upload movie data for later use
-
-We are going to upload data for the following entities: `basics`, `crew`, `principals` and `name`. Create a subfolder underneath `/user/hue/filmdata` for each entity
-
-```
-docker exec -ti namenode hadoop fs -mkdir /user/hue/filmdata/basics
-docker exec -ti namenode hadoop fs -mkdir /user/hue/filmdata/crew
-docker exec -ti namenode hadoop fs -mkdir /user/hue/filmdata/principals
-docker exec -ti namenode hadoop fs -mkdir /user/hue/filmdata/name
-```
-
-First let's download the sample data
-
-```
-mkdir flight
-cd flight
-curl http://stat-computing.org/dataexpo/2009/2008.csv.bz2 -o 2008.csv.bz2
-bzip2 -d 2008.csv.bz2
-
-curl http://stat-computing.org/dataexpo/2009/airports.csv -o airports.csv
-curl http://stat-computing.org/dataexpo/2009/plane-data.csv -o plane-data.csv
-curl http://stat-computing.org/dataexpo/2009/carriers.csv -o carriers.csv
-
-```
-	
-
-
-
