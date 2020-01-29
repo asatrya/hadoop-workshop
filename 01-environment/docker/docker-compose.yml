@@ -158,38 +158,18 @@ services:
       - ./conf/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
     restart: always
 
-  zeppelin:
-    image: trivadis/apache-zeppelin:0.8.2-hadoop2.7-spark2.4.4
-    container_name: zeppelin
-    hostname: zeppelin
-    ports:
-      - "38081:8080"
-#      - "4040:4040"
-#      - "42331:42331"    
-    env_file:
-      - ./conf/hadoop.env
+  # make sure to get Spark to fit with the version of spark master 
+  # - 2.4.0 tag 59b402ce701d
+  # - 2.4.3 tag abdb27a6dfbb
+  jupyter:
+    image: jupyter/all-spark-notebook:abdb27a6dfbb
+    container_name: jupyter
+    hostname: jupyter
+    ports: 
+      - "38888:8888"
     environment:
-      # AWS Credentials
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-
-      ZEPPELIN_ADDR: "0.0.0.0"
-      ZEPPELIN_PORT: "8080"
-      ZEPPELIN_INTERPRETER_CONNECT_TIMEOUT: 120000
-      SPARK_MASTER: "spark://spark-master:7077"
-
-      # set spark-master for Zeppelin interpreter
-      MASTER: "spark://spark-master:7077"
-      SPARK_DRIVER_HOST: zeppelin
-      SPARK_DRIVER_BINDADDRESS: "0.0.0.0"
-      PYSPARK_PYTHON: "python3"
-# no longer necessary with 0.8.2 of Zepplin      
-#      - SPARK_SUBMIT_OPTIONS="--packages org.apache.commons:commons-lang3:3.5"
-      # enableV4 to make it work with AWS Frankfurt region
-      SPARK_SUBMIT_OPTIONS: "--conf spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4 --conf spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4"
-    volumes:
-      - ./conf/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
-      - ./conf/zeppelin/shiro.ini:/opt/zeppelin/conf/shiro.ini
-      - ./conf/zeppelin/interpreter-setting.json:/opt/zeppelin/interpreter/spark/interpreter-setting.json
-      - ./data-transfer:/data-transfer
+      JUPYTER_ENABLE_LAB: "true"
+      JUPYTER_TOKEN: "abc123"
+      GRANT_SUDO: "true"
+      TINI_SUBREAPER: "true"
     restart: always
