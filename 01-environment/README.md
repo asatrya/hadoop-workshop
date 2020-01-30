@@ -71,9 +71,11 @@ The following service are available as part of the platform:
 
 Product | Type | Service | Url
 ------|------| --------| -----
-Hue | Development | Hue | <http://localhost:28888>
-Namenode UI | Management  | Haoop HDFS | <http://localhost:50070>
-Datanode-1 UI | Management  | Haoop HDFS | <http://localhost:50075>
-Datanode-2 UI | Management  | Haoop HDFS | <http://localhost:50076>
-Minio UI | Management | Minio | <http://localhost:9000>
+Hue | Development | Hue | <http://public-ip:28888>
+Namenode UI | Management  | Haoop HDFS | <http://public-ip:50070>
+Datanode-1 UI | Management  | Haoop HDFS | <http://public-ip:50075>
+Datanode-2 UI | Management  | Haoop HDFS | <http://public-ip:50076>
+Minio UI | Management | Minio | <http://public-ip:9000>
+Jupyter | Development | Jupyter | <http://public-ip:38888>
+Spark UI | Management  | Spark | <http://public-ip:8080>
 
