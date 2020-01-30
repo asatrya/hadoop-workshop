@@ -91,53 +91,6 @@ You have an active `SparkSession` available as the `spark` variable. Enter any v
 
 You can use `pyspark` for this workshop. But there are also two other, browser-based tools which are much more comfortable to use and which also allow to store the different steps as a notebook. 
 
-### Using Apache Zeppelin
-
-In a browser window, navigate to <http://analyticsplatform:38081> and you should see the Apache Zeppelin homepage. 
-
-First let's finish the configuration of the Spark Interpreter. Click on the **anonymous** drop-down menu and select **Interpreter**
-
-![Alt Image Text](./images/zeppelin-interpreter.png "Zeppelin Interpreter")
-
-On the **Interpreters** page, navigate to the **Spark** interpreter. You can also enter `spark` into the search edit field and **Interpreters** will be filtered down to only one single item. 
-
-![Alt Image Text](./images/zeppelin-spark-interpreter.png "Zeppelin Interpreter")
-
-Click on **edit** to change the configuration. Navigate to the **Properties** section and enter `1` into the **spark.cores.max** field and `8g` into the **spark.executor.memory** field. 
-
-![Alt Image Text](./images/zeppelin-spark-interpreter2.png "Zeppelin Interpreter")
-
-Then scroll all the way down to the bottom of the settings where you can see a **Dependency** section. Enter `org.apache.commons:commons-lang3:3.5` into the edit field below **artifact** and click **Save**
-
-![Alt Image Text](./images/zeppelin-spark-interpreter3.png "Zeppelin Interpreter")
-
-When asked to restart the interpreter, click **OK**. 
-
-Now let's create a new Notebook to perform some Spark actions. Navigate back to the Zeppelin homepage and click on the **Create new note** link. Enter `HelloSpark into the **Note Name** field and leave the **Default Interpreter** set to **spark** and click **Create**. 
-
-You should be brought forward to an empty notebook with an empty cell. Again just enter `spark.version` into the field and hit **Shift** + **Enter** to execute the statement.  
-
-![Alt Image Text](./images/zeppelin-spark-execute-cell.png "Zeppelin Execute Shell")
-
-By default the Spark Zeppelin interpreter will be using the Scala API. To switch to the Python API, use the following directive `%spark.pyspark` at the beginning of the cell. This will be the new default for the interpreter
-
-![Alt Image Text](./images/zeppelin-spark-execute-python.png "Zeppelin Execute Shell")
-
-Zeppelin allows for mixing different interpreters in one and the same Notebook, wheras one interpreter always being the default (the one chosen when creating the notebook, **spark** in our case). 
-
-You can use the `%sh` interpreter to perform shell actions. We can use it for example to perform a hadoop filesystem action using the `hadoop fs` command. For example to list the files in the `/user/hue/` folder on HDFS, we can perform the following command
-
-```
-%sh
-hadoop fs -ls hdfs://namenode:9000/user/hue 
-```
-
-**Note**: the shell will be executed inside the `zeppelin` container. Therefore to work with HDFS, we have to provide a full hdfs link. 
-
-![Alt Image Text](./images/zeppelin-spark-execute-shell.png "Zeppelin Execute Shell")
-
-You can use Apache Zeppelin to perform the workshop below. The other option is to use **Jupyter**. 
-
 ### Using Jupyter
 
 In a browser window navigate to <http://analyticsplatform:38888>. 
@@ -147,30 +100,20 @@ You should be forwarded to the **Jupyter** homepage. Click on the **Python 3** i
 
 ![Alt Image Text](./images/jupyter-create-notebook.png "Jupyter Create Notebook")
   
-You will be forwarded to an empty notebook with a first empty cell. Here you can enter your commands. In contrast to **Apache Zeppelin**, we don't have an active Spark Session at hand. We first have to create one. Add the following code to the first cell
+You will be forwarded to an empty notebook with a first empty cell. Here you can enter your commands. We first have to create Spark Session. Add the following code to the first cell
 
 ```
 import os
-# make sure pyspark tells workers to use python3 not 2 if both are installed
-#os.environ['PYSPARK_PYTHON'] = '/usr/bin/python3'
-
 import pyspark
+from pyspark.sql import SparkSession
+
 conf = pyspark.SparkConf()
 
-# point to mesos master or zookeeper entry (e.g., zk://10.10.10.10:2181/mesos)
-conf.setMaster("spark://spark-master:7077")
-
-# set other options as desired
-conf.set("spark.executor.memory", "8g")
-conf.set("spark.executor.cores", "1")
-conf.set("spark.core.connection.ack.wait.timeout", "1200")
-
-from pyspark.sql import SparkSession
 spark = SparkSession.builder.appName('abc').config(conf=conf).getOrCreate()
 sc = spark.sparkContext
 ```
 
-and execute it by entering **Shift** + **Enter**. If you check the code you can see that we connect to the Spark Master and get a session on the "spark cluster", available through the `spark` variable. The Spark Context is available as variable `sc`.
+and execute it by entering **Ctrl** + **Enter**. If you check the code you can see that we connect to the Spark Master and get a session on the "spark cluster", available through the `spark` variable. The Spark Context is available as variable `sc`.
 
 First execute `spark.version` in another shell to show the Spark version in place. And then excute a python command `print ("hello")` just to see that you are executing python. 
 
@@ -213,7 +156,7 @@ Of course you can also use **Hue** to upload the data as we have learned in the 
 ### Implement Wordcount using Spark Python API
 
 In this section we will see how Word Count can be implemented using the Spark Python API.
-You can either use one of the 3 different ways described above to access the Spark Python environment. Just copy and paste the commands either into the **PySpark** command line or the cells in **Zeppelin** or **Jupyter**. In **Jupyter** make sure to get the connection to spark using the script provided above. 
+You can either use one of the 2 different ways described above to access the Spark Python environment. Just copy and paste the commands either into the **PySpark** command line or the cells in **Jupyter**. In **Jupyter** make sure to get the connection to spark using the script provided above. 
 
 ```
 lines = sc.textFile("hdfs://namenode:9000/user/hue/wordcount/big.txt")
@@ -272,8 +215,8 @@ Here are the commands to perform when using the **Hadoop Filesystem Command** on
 ```
 docker exec -ti namenode hadoop fs -mkdir -p /user/hue/truckdata/
 
-docker exec -ti namenode hadoop fs -copyFromLocal /tmp/data-transfer/truckdata/geolocation.csv /user/hue/truckdata/
-docker exec -ti namenode hadoop fs -copyFromLocal /tmp/data-transfer/truckdata/trucks.csv /user/hue/truckdata/
+docker exec -ti namenode hadoop fs -copyFromLocal /data-transfer/truckdata/geolocation.csv /user/hue/truckdata/
+docker exec -ti namenode hadoop fs -copyFromLocal /data-transfer/truckdata/trucks.csv /user/hue/truckdata/
 
 docker exec -ti namenode hadoop fs -ls /user/hue/truckdata/
 ```
@@ -282,72 +225,27 @@ Now with the raw data in HDFS, let's use Spark and the DataFrames API to work wi
 
 ### Working with Trucks and Geolocation data using Spark DataFrames
 
-For this workshop we will be using Zeppelin discussed above. But you can easily adapt it to **PySpark** or **Apache Jupyter**.
-
-In a browser window, navigate to <http://analyticsplatform:38081> and make sure that you configure the **Spark** Interpreter as discussed above.
-
-Now let's create a new notebook by clicking on the **Create new note** link and set the **Note Name** to `SparkDataFrame` and set the **Default Interpreter** to `spark`. 
-Click on **Create Note** and a new Notebook is created with one cell which is empty. 
-
 Let’s now start working with the Trucks data, which we have uploaded with the file `trucks.csv`.
 
 #### Working with Truck Data
 
-Navigate to the first cell and start with a title. By using the `%md` directive we can switch to the Markdown interpreter, which can be used for displaying static text.
-
-```
-%md # Spark DataFrame sample with trucks and geolocation data
-```
-
-Click on the **>** symbol on the right or enter **Shift** + **Enter** to run the paragraph.
-
-The markdown code should now be rendered as a Heading-1 title.
- 
-Make sure that the data is in the right place. You can use the directive `%sh` to execute a shell action.
-
-```
-%sh
-hadoop fs -ls hdfs://namenode:9000/user/hue/truckdata
-```
-
-You should see the two files inside the `truckdata` folder
-
-![Alt Image Text](./images/zeppelin-sh-ls.png "Zeppelin Show Files")
-
-
 Now let’s start using some code. First let’s import the spark python API. 
 
 ```
-%pyspark
 from pyspark.sql.types import *
 ```
 
 Next let’s import the trucks data into a DataFrame and show the first 5 rows. We use header=true to use the header line for naming the columns and specify to infer the schema.  
 
 ```
-%pyspark
 trucksRawDF = spark.read.csv("hdfs://namenode:9000/user/hue/truckdata/trucks.csv", 
     	sep=",", inferSchema="true", header="true")
 trucksRawDF.show(5)
 ```
-	
-The output will show the header line followed by the 5 data lines.
-
-![Alt Image Text](./images/zeppelin-show-trucks-raw.png "Zeppelin Welcome Screen")
-
-If you get an error 
-
-```
-java.io.InvalidClassException: org.apache.commons.lang3.time.FastDateParser; local class incompatible: stream classdesc serialVersionUID = 2, local class serialVersionUID = 3
-``` 
-
-then make sure that you have added the `org.apache.commons:commons-lang3:3.5` as a dependency on the **Spark** interpreter (as shown in the introduction on how to use **Apache Zeppelin**). 
-
 
 Let’s display the schema, which has been derived from the data:
 
 ```	
-%pyspark
 trucksRawDF.printSchema()
 ```
 
@@ -371,21 +269,18 @@ root
 Next let’s ask for the total number of rows in the dataset. Should return 100. 
 
 ```
-%pyspark
 trucksRawDF.count()
 ```
 	
 You can also transform data easily into another format, just by writing the DataFrame out to a new file. Let’s create a JSON representation of the data. We will write it to a refined folder. 
 
 ```
-%pyspark
 trucksRawDF.write.json("hdfs://namenode:9000/user/hue/truckdata/truck.json")
 ```
 	
-Should you want to execute it a 2nd time, then you first have to delete the folder truck-json, otherwise the 2nd execution will throw an error. You can directly execute the remove from within Zeppelin, using the `%sh` directive. 
+Should you want to execute it a 2nd time, then you first have to delete the folder truck-json, otherwise the 2nd execution will throw an error.
 
 ```
-%sh
 hadoop fs -rm -R hdfs://namenode:9000/user/hue/truckdata/truck.json
 ```
 	
@@ -406,7 +301,6 @@ Again use some markdown to show that we are now working with geolocation data
 Then read the data from the `geolocation.csv` file into another DataFrame.
 
 ```
-%pyspark
 geolocationRawDF = spark.read.csv("hdfs://namenode:9000/user/hue/truckdata/geolocation.csv", 
 	    sep=",", inferSchema="true", header="true")
 geolocationRawDF.show(5)
@@ -415,14 +309,12 @@ geolocationRawDF.show(5)
 And show the schema, which has been inferred.
 
 ```
-%pyspark
 geolocationRawDF.printSchema()
 ```
 
 Let's also print the number of rows in the DataFrame. This should return 8000.
 
 ```
-%pyspark
 geolocationRawDF.count()
 ```
 
@@ -435,13 +327,12 @@ Now we also have the geolocation available in the DataFrame. Let’s work with i
 Add some markdown to start the new section
 
 ```
-%md ## Let's use some SQL to work with the data
+## Let's use some SQL to work with the data
 ```
 
 To use the data in a SQL statement, we can register the DataFrame as a temporary view. 
 
 ```
-%pyspark
 trucksRawDF.createOrReplaceTempView("trucks")
 geolocationRawDF.createOrReplaceTempView("geolocation")
 ```
@@ -449,7 +340,6 @@ geolocationRawDF.createOrReplaceTempView("geolocation")
 Temporary views in Spark SQL are session-scoped and will disappear if the session that creates it terminates. If you want to have a temporary view that is shared among all sessions and keep alive until the Spark application terminates, you can create a global temporary view. So instead of the above, you could also do
 
 ```
-%pyspark
 trucksRawDF.createGlobalTempView("trucks")
 geolocationRawDF.createGlobalTempView("geolocation")
 ```
@@ -460,69 +350,18 @@ Global temporary view is tied to a system preserved database `global_temp`, and 
 We can always ask for the table registered by executing the show tables SQL command.
 
 ```
-%pyspark
 spark.sql("show tables").show()
-```
 
-With the tables in place, we can execute SQL directly from a cell, by using the `%sql` directive. 
-
-```
-%sql
-SELECT * FROM trucks
-```
-
-When executing such a cell, the output is shown in the nice grid view as shown in the screenshot below. 
-
-![Alt Image Text](./images/zeppelin-sql-select.png "Zeppelin Welcome Screen")
-
-This is very helpful for testing various versions of a SQL statement, until you are sure about the result. It's not just easier to work and refine the SQL statement, is also much easier to interpret the result, compared to the method of using `show()` on the data frame.
-
-```
-%pyspark 
 spark.sql("SELECT * FROM trucks").show()
 ```
 
 Play with some different statements on `geolocation`. Let's start with just showing the data
 
 ```
-%sql
-SELECT * FROM geolocation
+spark.sql("SELECT * FROM geolocation").show()
 ```
 
-With the result of the `geolocation` table, you will also get an error message saying that the output has been truncated to 1000 rows. 
-
-You can also control this behaviour using the `LIMIT` clause of SQL
-
 ```
-%sql
-SELECT * FROM geolocation
-LIMIT 10
-```
-
-To restrict on a given column value, just use the `WHERE` clause of SQL
-
-```
-%sql
-SELECT * FROM geolocation WHERE event != 'normal'
-```
-
-Of course you can also to some more complex operations, i.e using `GROUP BY` with an aggregation operator (`COUNT` in this case):
-
-```
-%sql
-SELECT driverid, COUNT(*) FROM geolocation 
-WHERE event != 'normal'
-GROUP BY driverid
-ORDER BY COUNT(*) DESC
-LIMIT 5
-```
-
-We have seen that we can register a DataFrame as a table and then use these tables directly in SQL. But the result of the SQL is “only” shown on the notebook. 
-
-If we want to make use of SQL inside Spark, we can use the result of a SQL query to populate a new DataFrame. We can just take a statement we have previously tested using the `%sql` directive and execute it with a `spark.sql()` command. Using triple double-quotes allows us to specify the SQL over multiple lines, which allow a copy-paste from the version tested above.
-
-```
-%pyspark
 unsafeDrivingDF = spark.sql("""
 	                SELECT driverid, COUNT(*) occurance 
 	                FROM geolocation WHERE event != 'normal'
@@ -532,10 +371,11 @@ unsafeDrivingDF = spark.sql("""
 unsafeDrivingDF.show()
 ```
 
+Using triple double-quotes allows us to specify the SQL over multiple lines, which allow a copy-paste from the version tested above.
+
 Again register the result as a temporary view named `unsafe_driving`
 
 ```
-%pyspark
 unsafeDrivingDF.createOrReplaceTempView("unsafe_driving")
 ```
 
@@ -546,80 +386,12 @@ Now let’s use that technique to do some restructuring (transformation) of the 
 Again let’s name that section of the notebook, using some markdown. 
 
 ```
-%md ## Restructure the Trucks data
+## Restructure the Trucks data
 ```
 
 We will use the same statement as with the Hive workshop to unpivot the data, so that the different values by month are no longer in one result line per driver but on separate result lines. 
 
-Similar to the Hive workshop, we can use the `stack` function, together with the `LATERAL VIEW` command, which are both available in Spark SQL as well. For more info see [LATERAL VIEW](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+LateralView) and [stack function](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+LateralView).
-
-Let’s again first just test it using the `%sql` directive. 
-
 ```
-%sql
-SELECT truckid, driverid, rdate, miles, gas, miles / gas mpg 
-FROM trucks 
-LATERAL VIEW stack(54, 
-				'jun13',jun13_miles,jun13_gas,
-				'may13',may13_miles,may13_gas,
-				'apr13',apr13_miles,apr13_gas,
-				'mar13',mar13_miles,mar13_gas,
-				'feb13',feb13_miles,feb13_gas,
-				'jan13',jan13_miles,jan13_gas,
-				'dec12',dec12_miles,dec12_gas,
-				'nov12',nov12_miles,nov12_gas,
-				'oct12',oct12_miles,oct12_gas,
-				'sep12',sep12_miles,sep12_gas,
-				'aug12',aug12_miles,aug12_gas,
-				'jul12',jul12_miles,jul12_gas,
-				'jun12',jun12_miles,jun12_gas,
-				'may12',may12_miles,may12_gas,
-				'apr12',apr12_miles,apr12_gas,
-				'mar12',mar12_miles,mar12_gas,
-				'feb12',feb12_miles,feb12_gas,
-				'jan12',jan12_miles,jan12_gas,
-				'dec11',dec11_miles,dec11_gas,
-				'nov11',nov11_miles,nov11_gas,
-				'oct11',oct11_miles,oct11_gas,
-				'sep11',sep11_miles,sep11_gas,
-				'aug11',aug11_miles,aug11_gas,
-				'jul11',jul11_miles,jul11_gas,
-				'jun11',jun11_miles,jun11_gas,
-				'may11',may11_miles,may11_gas,
-				'apr11',apr11_miles,apr11_gas,
-				'mar11',mar11_miles,mar11_gas,
-				'feb11',feb11_miles,feb11_gas,
-				'jan11',jan11_miles,jan11_gas,
-				'dec10',dec10_miles,dec10_gas,
-				'nov10',nov10_miles,nov10_gas,
-				'oct10',oct10_miles,oct10_gas,
-				'sep10',sep10_miles,sep10_gas,
-				'aug10',aug10_miles,aug10_gas,
-				'jul10',jul10_miles,jul10_gas,
-				'jun10',jun10_miles,jun10_gas,
-				'may10',may10_miles,may10_gas,
-				'apr10',apr10_miles,apr10_gas,
-				'mar10',mar10_miles,mar10_gas,
-				'feb10',feb10_miles,feb10_gas,
-				'jan10',jan10_miles,jan10_gas,
-				'dec09',dec09_miles,dec09_gas,
-				'nov09',nov09_miles,nov09_gas,
-				'oct09',oct09_miles,oct09_gas,
-				'sep09',sep09_miles,sep09_gas,
-				'aug09',aug09_miles,aug09_gas,
-				'jul09',jul09_miles,jul09_gas,
-				'jun09',jun09_miles,jun09_gas,
-				'may09',may09_miles,may09_gas,
-				'apr09',apr09_miles,apr09_gas,
-				'mar09',mar09_miles,mar09_gas,
-				'feb09',feb09_miles,feb09_gas,
-				'jan09',jan09_miles,jan09_gas ) dummyalias AS rdate, miles, gas
-```
-
-Once we are sure that it is working correctly, we can populate a new DataFrame with the results of the SQL query.
-
-```
-%pyspark
 truckMileageDF = spark.sql("""
 SELECT truckid, driverid, rdate, miles, gas, miles / gas mpg 
 FROM trucks 
@@ -686,14 +458,12 @@ With such a large SQL statement, the tripple-quotes are really helpful!
 Let’s print the schema of the new DataFrame.
 
 ```
-%pyspark
 truckMileageDF.printSchema()
 ```
 
 We can also work on the DataFrame in a fluent-API style, for example to only show data of a given driver. This is just the programmatic version as an alternative for using SQL.
 
 ```
-%pyspark
 truckMileageDF.filter(truckMileageDF.driverid=="A3").show(10)
 ```
 
@@ -704,7 +474,7 @@ We have successfully transformed the truck data and made it available as a DataF
 Again let’s name that section of the notebook, using some markdown. 
 
 ```
-%md ## Persist result data in HDFS
+## Persist result data in HDFS
 ```
 
 Let’s write the `truckMileageDF` DataFrame to HDFS. We could again use CSV or JSON to do that. 
@@ -716,14 +486,12 @@ But there are more efficient serialisation formats, such as **Parquet**, **ORC**
 First we will see how we can save the result as a **JSON** formatted file. 
 
 ```
-%pyspark
 truckMileageDF.write.json('hdfs://namenode:9000/user/hue/truckdata/truckmileage-json')
 ```
 
 and then check that the file has been written using the `hadoop fs` command
 
-```
-%sh
+```sh
 hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-parquet
 ```	
 
@@ -732,14 +500,12 @@ hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-parquet
 Next let's save the result to a **Parquet** formatted file. We use a similar statement as above when we wrote JSON, just using the `parquet()` method instead.
 
 ```
-%pyspark
 truckMileageDF.write.parquet('hdfs://namenode:9000/user/hue/truckdata/truckmileage-parquet')
 ```
 
 Let's see it has worked with another `hadoop fs` command
 
 ```
-%sh
 hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-parquet
 ```	
 	
@@ -748,14 +514,12 @@ hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-parquet
 To use an **ORC** formatted file, we use a similar statement as above but instead of the `parquet()` method we use the generic `format()` together with the `save()` method.
 
 ```
-%pyspark
 truckMileageDF.write.format("orc").save('hdfs://namenode:9000/user/hue/truckdata/truckmileage-orc')
 ```
 
 Again let's see it it has worked with the `hadoop fs` command
 
 ```
-%sh
 hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-orc
 ```	
 
@@ -764,7 +528,6 @@ hadoop fs -ls -h hdfs://namenode:9000/user/hue/truckdata/truckmileage-orc
 We can also tryout the **Avro** format in a similar way
 
 ```
-%pyspark
 truckMileageDF.write.format("avro").save('hdfs://namenode:9000/user/hue/truckdata/truckmileage-avro')
 ```
 
@@ -779,83 +542,26 @@ Now let’s do some simple analytics on the data, both using SQL and the fluent-
 Again start with a new section my using some markdown. 
 
 ```
-%md ## Apply some analytics on the data
+## Apply some analytics on the data
 ```
 
 Now register the truck mileage DataFrame as a table 
 
 ```
-%pyspark
 truckMileageDF.createOrReplaceTempView("truck_mileage")
 ```	
 
 Calculate and display the average value of mpg by truck. Let’s first do it with SQL
 
 ```
-%sql
-SELECT truckid, avg(mpg) avgmpg
-FROM truck_mileage
-GROUP BY truckid
+spark.sql("""SELECT truckid, avg(mpg) avgmpg
+	FROM truck_mileage
+	GROUP BY truckid""").show()
 ```
 
 We can do the same in a programmatic way using the fluent API
 
 ```
-%pyspark
 avgMpgByTruck = truckMileageDF.groupBy("truckId").agg({"mpg":"avg"})
 avgMpgByTruck.show()
 ```
-
-Let’s calculate the total miles per driver, first testing the SQL statement using the %sql directive.
-
-```
-%sql
-SELECT driverid, sum(miles) totmiles
-FROM truck_mileage
-GROUP BY driverid
-```
-
-Then create a DataFrame with the result and register a table at the same time.
-
-```
-%pyspark
-spark.sql("""
-	       SELECT driverid, sum(miles) totmiles
-	       FROM truck_mileage
-	       GROUP BY driverid
-	       """).createOrReplaceTempView("driver_milage")
-```
-
-Let’s display all the views we have now available.
-
-```
-%pyspark
-spark.sql("show tables").show()
-```
-
-Next let’s join the `unsafe_driving` view with the `driver_mileage` to see the number of occurrences and the total miles driven by the driver.
-
-```
-%sql
-SELECT a.driverid,a.occurance,b.totmiles 
-FROM unsafe_driving a
-LEFT JOIN driver_milage b 
-ON (a.driverid=b.driverid)
-```
-
-By extending the SQL statement from above (using it as an inline view), we can calculate a risk factor by driver. 
-
-```
-%sql
-SELECT driverid, occurance, totmiles, totmiles/occurance riskfactor 
-FROM (
-	SELECT a.driverid,a.occurance,b.totmiles 
-	FROM unsafe_driving a
-	LEFT JOIN driver_milage b 
-	ON (a.driverid=b.driverid)
-)
-```
-
-
-
-
