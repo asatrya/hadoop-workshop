@@ -41,6 +41,43 @@ services:
       - ./conf/hadoop.env
     restart: always
 
+  hive-server:
+    image: johannestang/hive:2.3.4-postgresql-metastore-s3
+    container_name: hive-server
+    hostname: hive-server
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    env_file:
+      - ./conf/hadoop.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+#      HDFS_CONF_fs_s3a_access_key: ${MINIO_ACCESS_KEY}
+#      HDFS_CONF_fs_s3a_secret_key: ${MINIO_SECRET_KEY}
+    volumes:
+      - ./data-transfer:/data-transfer
+    restart: always
+
+  hive-metastore:
+    image: johannestang/hive:2.3.4-postgresql-metastore-s3
+    container_name: hive-metastore
+    hostname: hive-metastore
+    ports:
+      - "9083:9083"
+    env_file:
+      - ./conf/hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      - "SERVICE_PRECONDITION=namenode:9870 datanode-1:9864 hive-metastore-postgresql:5432"
+    restart: always
+  
+  hive-metastore-postgresql:
+    container_name: hive-metastore-postgresql
+    hostname: hive-metastore-postgresql
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    restart: always
+
   hue:
     image: gethue/hue:4.4.0
     container_name: hue
@@ -62,6 +99,17 @@ services:
       POSTGRES_DB: hue
       POSTGRES_PASSWORD: hue
       POSTGRES_USER: hue
+    restart: always
+
+  hadoop-client:
+    image: trivadis/apache-hadoop-client:2.0.0-hadoop3.1.1-java8
+    container_name: hadoop-client
+    hostname: hadoop-client
+    env_file:
+      - ./conf/hadoop.env
+    volumes:
+      - ./data-transfer:/data-transfer
+    command: tail -f /dev/null
     restart: always
 
   minio:

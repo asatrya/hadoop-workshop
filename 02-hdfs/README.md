@@ -25,6 +25,14 @@ In our environment, the Hadoop command is accessible inside the `namenode` conta
 docker exec -it namenode bash
 ```
 
+You can also access HDFS cluster using any node where Hadoop Client is installed. For example, you can go into `hadoop-client` container's bash
+
+```
+docker exec -it hadoop-client bash
+```
+
+Following instructions can be run both from inside `namenode` and `hadoop-client` containers.
+
 To access the help for the `fs` command, enter
 
 ```
