@@ -41,6 +41,48 @@ services:
       - ./conf/hadoop.env
     restart: always
 
+  resourcemanager:
+    image: trivadis/apache-hadoop-resourcemanager:2.0.0-hadoop3.1.1-java8
+    container_name: resourcemanager
+    hostname: resourcemanager
+    ports:
+      - "8088:8088"
+    depends_on:
+      - namenode
+      - datanode-1
+    env_file:
+      - ./conf/hadoop.env
+    restart: always
+  
+  nodemanager:
+    image: trivadis/apache-hadoop-nodemanager:2.0.0-hadoop3.1.1-java8
+    container_name: nodemanager
+    hostname: nodemanager
+    ports:
+      - "8042:8042"
+    depends_on:
+      - namenode
+      - datanode-1
+      - datanode-2
+    env_file:
+      - ./conf/hadoop.env
+    restart: always
+
+  historyserver:
+    image: trivadis/apache-hadoop-historyserver:2.0.0-hadoop3.1.1-java8
+    container_name: historyserver
+    hostname: historyserver
+    ports:
+      - "8188:8188"
+    depends_on:
+      - namenode
+      - datanode-1
+    env_file:
+      - ./conf/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode-1:9864 datanode-2:9864 resourcemanager:8088"      
+    restart: always
+
   hive-server:
     image: johannestang/hive:2.3.4-postgresql-metastore-s3
     container_name: hive-server
